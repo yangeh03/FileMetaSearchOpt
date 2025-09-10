@@ -24,6 +24,8 @@
    - 范围分片机制提升范围查询效率
    - Varint 编码压缩优化存储空间
 
+![image-20250910112510319](./README.assets/image-20250910112510319.png)
+
 ## 📂 项目结构
 
 ```
@@ -111,6 +113,8 @@ The system consists of two core modules:
    - Handles string and numeric metadata indexing
    - Uses sharding for efficient range queries
    - Optimized with Varint compression
+
+![image-20250910112520598](./README.assets/image-20250910112520598.png)
 
 ## 📂 Project Structure
 
