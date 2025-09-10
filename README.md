@@ -1,76 +1,171 @@
+# 元数据查询优化系统
 
+## 📖 项目简介
 
-# 文件元数据查找优化系统
+传统文件系统只支持「目录树遍历」式查询，在大规模场景下性能急剧下降。  本项目提出并实现了一种高效的 **文件系统元数据查询优化方案**。通过在目录树结构之外引入 **倒排索引**，并结合 **Varint 编码压缩**、**读写锁机制** 和 **线程安全数据结构**，实现了在大规模文件系统下的高效查询与并发优化。实验表明，本系统在查询性能和内存占用方面均有显著提升。
 
-## 项目概述
+## ✨ 主要特性
 
-本项目旨在通过构建倒排索引优化文件元数据的查找效率，以解决传统目录树检索在大规模文件系统中的性能瓶颈。该系统在内存中模拟了目录树结构及其倒排索引，并通过实验验证了使用倒排索引后的查询性能提升效果。
+- **倒排索引优化查询**：支持快速定位特定元数据文件，避免线性遍历目录树。
+- **Varint 压缩**：显著减少倒排索引的存储空间。
+- **高并发支持**：引入读写锁机制与 `ConcurrentHashMap`，保证一致性和性能。
+- **灵活的数据结构**：支持目录树管理和范围索引，满足多样化查询需求。
+- **实验验证**：在大规模数据（25 万文件）下验证了查询性能与内存优化效果。
 
-![img1](https://private-user-images.githubusercontent.com/104954698/356976150-6beac250-80c8-4a78-99ad-03100f471c53.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MjM0NTA4OTgsIm5iZiI6MTcyMzQ1MDU5OCwicGF0aCI6Ii8xMDQ5NTQ2OTgvMzU2OTc2MTUwLTZiZWFjMjUwLTgwYzgtNGE3OC05OWFkLTAzMTAwZjQ3MWM1My5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjQwODEyJTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI0MDgxMlQwODE2MzhaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT0xMGUzYWZmODg0MzFkY2JkNmQ0NDcyYTBjNWQ3ZjZjODY5NDJkODE3N2Y0MDA1YWYyNDkwYmMwZTJmODBiZDM2JlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCZhY3Rvcl9pZD0wJmtleV9pZD0wJnJlcG9faWQ9MCJ9.QRN97rL5Fbm4IaC_z6tcKFGCmfDTprOQvIG4h_hfX8I)
+## 🏗️ 系统架构
 
+系统主要由两大核心模块组成：
 
-## 设计原理
+1. **文件系统管理（FSDirectory）**
+   - 目录树结构管理
+   - 文件/目录的创建、删除、更新、查询
+2. **倒排索引（InvertedIndex）**
+   - 支持字符串型与数值型元数据的索引
+   - 范围分片机制提升范围查询效率
+   - Varint 编码压缩优化存储空间
 
-### 背景
+## 📂 项目结构
 
-在传统的文件系统中，文件元数据的检索主要依赖于目录树结构。然而，随着数据量的增加，尤其是在人工智能应用中，对文件系统的查找需求越来越复杂。简单的基于目录树的检索方式在面对大量文件及复杂查询条件时，性能显著下降。
+```
+├── src/
+│   └── main/
+│       └── java/
+│           ├── FS/         # 文件系统管理相关类 / File system management classes
+│           ├── index/      # 倒排索引相关类 / Inverted index classes
+│           ├── utils/      # 工具类 / Utilities
+│           ├── TestFS.java # 测试入口 / Test entry
+│           └── readme.md   # 说明文档 / Documentation
+├── target/                 # 编译输出 / Compiled output
+├── pom.xml                 # 构建配置 / Build config
+├── README.md               # 项目说明 / Project description
+└── project-details.docx    # 项目文档 / Project documentation
+```
 
-### 解决方案
+## ⚙️ 环境要求
 
-为了应对这些挑战，本项目引入了倒排索引的概念。倒排索引通过为每个文件元数据建立索引链表，能够大幅度提升特定元数据条件下的文件查找速度。例如，要查找所有后缀为`.jpg`的文件，倒排索引只需查找一次链表，而无需遍历整个目录树。
+- **操作系统**：Ubuntu 20.04 或以上（建议）
+- **编程语言**：Java 11+
+- **硬件**：推荐 16GB 内存及以上
 
-## 系统架构
+## 🚀 快速开始
 
-![img2](https://private-user-images.githubusercontent.com/104954698/356976124-f4068630-a116-4e5b-a982-fec52a97756f.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MjM0NTA4OTgsIm5iZiI6MTcyMzQ1MDU5OCwicGF0aCI6Ii8xMDQ5NTQ2OTgvMzU2OTc2MTI0LWY0MDY4NjMwLWExMTYtNGU1Yi1hOTgyLWZlYzUyYTk3NzU2Zi5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjQwODEyJTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI0MDgxMlQwODE2MzhaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT0wNWFhODcxYzQ2YjUxYzU0MWIzNjM1ZjcyZTkwM2JjYTlhMWUyYTczODcxZDZkOWE0MmIyY2I5MDA1Y2QwODRhJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCZhY3Rvcl9pZD0wJmtleV9pZD0wJnJlcG9faWQ9MCJ9.WcbHY0tg7yUsc9YBK1cCHkPWuxe6lVmR_fHr_15y2bo)
+1. 克隆仓库：
 
+   ```bash
+   git clone https://github.com/yangeh03/metadata-query-optimizer.git
+   cd metadata-query-optimizer
+   ```
 
-### 目录树结构
+2. 编译所有 Java 文件：
 
-目录树结构模拟了文件系统的基础框架，每个节点代表一个文件或目录。节点中存储了与文件相关的所有元数据，如文件名、后缀名、大小、创建时间和所有者等。这些元数据通过目录树结构实现了基本的文件组织和层次化管理。
+   ```bash
+   javac -d out src/main/java/**/*.java
+   ```
 
-### 倒排索引结构
+3. 运行主测试类（包含全部评测）：
 
-倒排索引独立于目录树结构之外存在，其核心是元数据与文件ID的映射关系。索引通过哈希表实现，每个元数据项作为键，对应一个链表，链表中存储了所有符合该元数据条件的文件ID。
-[README.md](https://github.com/user-attachments/files/16579030/README.md)
+   ```bash
+   java -cp out TestFS
+   ```
 
-#### 数据结构
+4. 或使用 Maven 编译（如需单元测试）：
 
-- **倒排链表**: 每个元数据项（如文件后缀、大小等）对应一个链表，链表中的每个节点记[README.md](https://github.com/user-attachments/files/16579048/README.md)
-录文件ID。
-- **哈希表**: 用于快速定位元数据对应的倒排链表。
+   ```bash
+   mvn compile
+   mvn test
+   ```
 
-### 并发性考虑
+## 📊 实验结果
 
-在多线程环境下，倒排索引需要处理并发读写的正确性。本系统采用了线程锁机制，以确保在高并发环境下索引数据的一致性和准确性。
+- **查询性能**：倒排索引相比目录树查询速度提升 **数十倍**，尤其在大规模文件下表现显著。
+- **内存优化**：Varint 压缩使索引占用空间减少至原来的 **20%–25%**。
+- **并发性能**：在 10 万文件规模下，并发查询耗时降低超过 **10 倍**。
 
-### 空间优化
+好的 👍 我帮你写一个英文版本的 **README.md**，适合直接放在 GitHub 上。
 
-倒排索引虽然极大提升了查询效率，但也引入了额外的存储开销。为此，我们引入了索引数据的压缩技术，以减少内存使用。此外，还针对索引的稀疏性设计了优化方案，进一步降低了空间复杂度。
+------
 
-## 实现细节
+# Metadata Query Optimization System
 
-### 目录树模拟
+## 📖 Overview
 
-目录树的实现采用链表和哈希表的结合。每个目录节点包含子目录的指针和文件的元数据信息。文件节点与倒排索引通过唯一文件ID关联。
+This project proposes and implements an **efficient metadata query optimization system** for large-scale file systems.
+ By introducing an **inverted index** outside the traditional directory tree, combined with **Varint compression**, **read-write locks**, and **thread-safe data structures**, the system significantly improves query performance and memory usage in high-concurrency environments.
 
-### 倒排索引的建立
+## ✨ Features
 
-系统启动时，首先扫描整个目录树，提取文件元数据，并为每个元数据项建立相应的倒排索引。后续的文件插入、删除操作均会动态更新索引，确保索引与目录树的同步性。
+- **Inverted Index for Fast Queries**: Quickly locate files by metadata without traversing the entire directory tree.
+- **Varint Compression**: Reduces the storage footprint of inverted indexes.
+- **High Concurrency Support**: Uses fine-grained read-write locks and `ConcurrentHashMap` to ensure data consistency and system performance.
+- **Flexible Data Structures**: Supports both directory tree management and range-based indexing for various query types.
+- **Validated by Experiments**: Proven effective in datasets with up to **250,000 files**.
 
-### 查询加速
+## 🏗️ System Architecture
 
-在进行文件查询时，系统首先判断查询条件是否可以通过倒排索引加速。如果可以，则直接使用倒排索引快速定位文件。如果查询条件较为复杂，则采用索引和目录树结合的混合查询策略。
+The system consists of two core modules:
 
-## 评估与性能分析
+1. **File System Management (FSDirectory)**
+   - Manages directory tree structure
+   - Supports create, update, delete, and search operations
+2. **Inverted Index (InvertedIndex)**
+   - Handles string and numeric metadata indexing
+   - Uses sharding for efficient range queries
+   - Optimized with Varint compression
 
-### 查询性能对比
+## 📂 Project Structure
 
-通过实验，我们对比了使用倒排索引前后在不同查询条件下的性能。实验结果显示，在大部分条件下，倒排索引的引入使查询速度提高了数十倍，尤其是在需要检索大量文件时，效果尤为显著。
+```
+├── src/
+│   └── main/
+│       └── java/
+│           ├── FS/         # File system management classes / 文件系统管理相关类
+│           ├── index/      # Inverted index classes / 倒排索引相关类
+│           ├── utils/      # Utilities / 工具类
+│           ├── TestFS.java # Test entry / 测试入口
+│           └── readme.md   # Documentation / 说明文档
+├── target/                 # Compiled output / 编译输出
+├── pom.xml                 # Build config / 构建配置
+├── README.md               # Project description / 项目说明
+└── project-details.docx    # Project documentation / 项目文档
+```
 
-### 存储开销
+## ⚙️ Requirements
 
-我们评估了倒排索引对系统内存的占用情况，并通过多种压缩策略减少了索引的存储空间。实验表明，压缩后的倒排索引在保证查询速度的前提下，内存开销减少了约40%。
+- **OS**: Ubuntu 20.04+ (recommended)
+- **Language**: Java 11+
+- **Hardware**: ≥16 GB RAM recommended
 
-## 总结
+## 🚀 Quick Start
 
-本项目实现了一个在内存中模拟的文件元数据查找优化系统，通过倒排索引显著提升了文件元数据的查询效率。该系统为大规模文件系统的元数据管理提供了一种高效的解决方案，并在多线程环境下具备良好的扩展性和稳定性。
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/yangeh03/metadata-query-optimizer.git
+   cd metadata-query-optimizer
+   ```
+
+2. Compile all Java files:
+
+   ```bash
+   javac -d out src/main/java/**/*.java
+   ```
+
+3. Run the main test class (includes all evaluations):
+
+   ```bash
+   java -cp out TestFS
+   ```
+
+4. Or use Maven to compile and run tests:
+
+   ```bash
+   mvn compile
+   mvn test
+   ```
+
+## 📊 Experimental Results
+
+- **Query Performance**: Inverted index achieves up to **tens of times faster queries** compared to directory tree traversal.
+- **Memory Optimization**: Varint compression reduces index memory usage to **20%–25%** of the original.
+- **Concurrency Performance**: Under 100K files, concurrent query latency is reduced by **over 10×**.
+
